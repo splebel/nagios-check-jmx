@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
@@ -32,6 +34,7 @@ public class JMXQuery {
 	private long warning, critical;
 	private String attribute, info_attribute;
 	private String attribute_key, info_key;
+	private String username, password;
 	private String object;
 	
 	private long checkData;
@@ -50,7 +53,11 @@ public class JMXQuery {
 	private void connect() throws IOException
 	{
          JMXServiceURL jmxUrl = new JMXServiceURL(url);
-         connector = JMXConnectorFactory.connect(jmxUrl);
+         Map<String,Object> env = new HashMap<String,Object>();
+         if (username != null) {
+         	env.put("jmx.remote.credentials", new String[] {username, password});
+         }
+         connector = JMXConnectorFactory.connect(jmxUrl, env);
          connection = connector.getMBeanServerConnection();
 	}
 	
@@ -206,10 +213,16 @@ public class JMXQuery {
 	}
 
 	private long parseData(Object o) {
-		if(o instanceof Number)
+		if (o instanceof Number) {
 			return ((Number)o).longValue();
-		else 
+		}
+		else if (o instanceof Boolean) {
+			boolean b = ((Boolean)o).booleanValue();
+			return b ? 1 : 0;
+		}
+		else { 
 			return Long.parseLong(o.toString());
+		}
 	}
 
 
@@ -234,6 +247,10 @@ public class JMXQuery {
 					this.info_key = args[++i];
 				}else if(option.equals("-K")){
 					this.attribute_key = args[++i];
+				}else if(option.equals("-u")){
+					this.username = args[++i];
+				}else if(option.equals("-p")){
+					this.password = args[++i];
 				}else if(option.startsWith("-v")){
 					this.verbatim = option.length()-1;
 				}else if(option.equals("-w")){

@@ -7,3 +7,7 @@
 18 Mar, 2009, ver.0.3 - Updated to handle values larger than an Integer could handle, changed to Long.
 			Fixed NumberFormatException for warning/critical values larger than 2^31-1(2147483647 bytes)
 			Adam Serediuk <serediuk@gmail.com>
+
+29 Jun, 2009, ver.1.0 - Added support for username/password authentication via new -u and -p options.
+			Added support for boolean variables.  (Booleans will now get converted to an integer 1 or 0, so that they can be checked by Nagios.)  
+			David Rosenstrauch <darose@darose.net>

@@ -4,10 +4,10 @@ import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 
 import javax.management.Attribute;
+import javax.management.AttributeList;
 import javax.management.InstanceNotFoundException;
 import javax.management.IntrospectionException;
 import javax.management.MBeanAttributeInfo;
@@ -91,7 +91,6 @@ public class JMXQuery {
 			System.out.println(name+".value "+format(attr));
 	}
 
-	@SuppressWarnings("unchecked")
 	private void listAll() throws IOException, InstanceNotFoundException, IntrospectionException, ReflectionException {
 		Set<ObjectName> mbeans = connection.queryNames(null, null);
 		for(ObjectName name : mbeans){
@@ -102,8 +101,8 @@ public class JMXQuery {
 				attrNames[i] = attrs[i].getName();
 			}
 			try {
-				List<Attribute> attributes = connection.getAttributes(name, attrNames);
-				for(Attribute attribute: attributes){	
+				AttributeList attributes = connection.getAttributes(name, attrNames);
+				for(Attribute attribute: attributes.asList()){	
 					output(name.getCanonicalName()+"%"+attribute.getName(),attribute.getValue());
 				}				
 			} catch (Exception e) {

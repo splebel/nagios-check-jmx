@@ -1,4 +1,4 @@
-Usage: check_jmx -U url -O object_name -A attribute [-K compound_key] [-I attribute_info] [-J attribute_info_key] -w warn_limit -c crit_limit [-v[vvv]] [-help]
+Usage: check_jmx -U url -O object_name -A attribute [-K compound_key] [-I attribute_info] [-J attribute_info_key] [-u username] [-p password] -w warn_limit -c crit_limit [-v[vvv]] [-help]
 
 , where options are:
 
@@ -22,6 +22,12 @@ Usage: check_jmx -U url -O object_name -A attribute [-K compound_key] [-I attrib
     
 -J 
     Attribute key for -I attribute compound data, for example, "used" (optional)
+
+-u
+	credentials user name
+
+-p
+	credentials password
 
 -v[vvv]
 	verbatim level controlled as a number of v (optional)

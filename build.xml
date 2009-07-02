@@ -13,13 +13,22 @@
 
 	<path id="buildpath">
 	</path>
+
+	<target name="clean">
+		<delete dir="${out}"/>
+		<delete dir="${dist}"/>
+	</target>
 	
 	<target name="all" depends="jar">
 	</target>
 	
 	<target name="jar" depends="compile">
-		<jar destfile="munin/plugin/jmxquery.jar" basedir="${out}"/>
-		<jar destfile="nagios/plugin/jmxquery.jar" basedir="${out}"/>
+		<jar destfile="munin/plugin/jmxquery.jar" basedir="${out}">
+			<include name="org/munin/**"/>
+		</jar>
+		<jar destfile="nagios/plugin/jmxquery.jar" basedir="${out}">
+			<include name="org/nagios/**"/>
+		</jar>
 	</target>
 	
 	<target name="compile">
