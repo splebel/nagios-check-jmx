@@ -1,0 +1,5 @@
+-------- JMX plugin for Munin/Nagios Changelog ---------
+
+21 Nov, 2006, ver 0.1 - initial version
+
+04 Dec, 2006, ver.0.2 - added plugin for Nagios
