@@ -8,6 +8,7 @@ import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
@@ -194,7 +195,13 @@ public class JMXQuery {
 			if(attribute_key==null)
 				throw new ParseError("Attribute key is null for composed data "+object);
 			checkData = parseData(cds.get(attribute_key));
-		}else{
+		} else if (attr instanceof Set) {
+			Set set = (Set) attr;
+			checkData = set.size();
+		} else if (attr instanceof Map) {
+			Map map = (Map) attr;
+			checkData = map.size();
+		} else{
 			checkData = parseData(attr);
 		}
 		
@@ -213,6 +220,7 @@ public class JMXQuery {
 	}
 
 	private long parseData(Object o) {
+		
 		if (o instanceof Number) {
 			return ((Number)o).longValue();
 		}
