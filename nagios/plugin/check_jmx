@@ -3,4 +3,4 @@
 # Nagios plugin to monitor Java JMX (http://java.sun.com/jmx)attributes.
 #
 RDIR=`dirname $0`
-java -cp $RDIR/jmxquery.jar org.nagios.JMXQuery $@
+java -cp $RDIR/jmxquery.jar org.nagios.JMXQuery "$@"
