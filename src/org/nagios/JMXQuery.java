@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.Arrays;
 
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
@@ -201,6 +202,9 @@ public class JMXQuery {
 		} else if (attr instanceof Map) {
 			Map map = (Map) attr;
 			checkData = map.size();
+		} else if (attr instanceof Object[]) {
+			Object[] objects = (Object[]) attr;
+			checkData = Arrays.asList(objects).size();
 		} else{
 			checkData = parseData(attr);
 		}
