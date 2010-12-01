@@ -5,6 +5,9 @@ import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import javax.management.Attribute;
 import javax.management.AttributeList;
@@ -19,7 +22,6 @@ import javax.management.openmbean.CompositeDataSupport;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
-
 import org.munin.Configuration.FieldProperties;
 
 
@@ -31,53 +33,77 @@ import org.munin.Configuration.FieldProperties;
  * 
  */
 public class JMXQuery {
+	private static final String USERNAME_KEY = "username";
+	private static final String PASSWORD_KEY = "password";
+	
+	public static final String USAGE = "Usage of program is:\n"
+        + "java -cp jmxquery.jar org.munin.JMXQuery --url=<URL> [--user=<username> --pass=<password>] [--conf=<config file> [config]]\n"
+        + ", where <URL> is a JMX URL, for example: service:jmx:rmi:///jndi/rmi://HOST:PORT/jmxrmi\n"
+        + "When invoked with the config file (see examples folder) - operates as Munin plugin with the provided configuration\n"
+        + "Without options just fetches all JMX attributes using provided URL";
 
 	private String url;
+	private String username;
+	private String password;
 	private JMXConnector connector;
 	private MBeanServerConnection connection;
 	private Configuration config;
+
+	public JMXQuery(String url)	{
+		this(url, null, null);
+	}
 	
-	
-	public JMXQuery(String url) {
+	public JMXQuery(String url, String username, String password)	{
 		this.url = url;
+		this.username = username;
+		this.password = password;
 	}
 
-	private void connect() throws IOException
-	{
-         JMXServiceURL jmxUrl = new JMXServiceURL(url);
-         connector = JMXConnectorFactory.connect(jmxUrl);
-         connection = connector.getMBeanServerConnection();
+	private void connect() throws IOException {
+		Map<String, Object> environment = null;
+		if (username != null && password != null) {
+            environment = new HashMap<String, Object>();
+            // Which of these are needed? Documentation is unclear ...
+            environment.put(JMXConnector.CREDENTIALS, new String[] {username, password});
+            environment.put(USERNAME_KEY, username);
+            environment.put(PASSWORD_KEY, password);
+		}
+		
+		JMXServiceURL jmxUrl = new JMXServiceURL(url);
+		connector = JMXConnectorFactory.connect(jmxUrl, environment);
+		connection = connector.getMBeanServerConnection();
 	}
-	
-
-	
 
 	private void list() throws IOException, InstanceNotFoundException, IntrospectionException, ReflectionException {
-		if(config==null)
+		if (config == null) {
 			listAll();
-		else
+		} else {
 			listConfig();
+		}
 	}
 
 	private void listConfig() {
-		for(FieldProperties field : config.getFields()){
-			try {
+		for (FieldProperties field : config.getFields()) {
+			try	{
 				Object value = connection.getAttribute(field.getJmxObjectName(), field.getJmxAttributeName());
 				output(field.getFieldname(), value, field.getJmxAttributeKey());
 			} catch (Exception e) {
-				System.err.println("Fail to output "+field+":"+e.getMessage());
+				System.err.println("Fail to output " + field);
+				e.printStackTrace();
 			}
 		}
 	}
 
 	private void output(String name, Object attr, String key) {
-		if(attr instanceof CompositeDataSupport){
+		if (attr instanceof CompositeDataSupport) {
 			CompositeDataSupport cds = (CompositeDataSupport) attr;
-			if(key==null)
-				throw new IllegalArgumentException("Key is null for composed data "+name);
-			System.out.println(name+".value "+format(cds.get(key)));
-		}else
-			System.out.println(name+".value "+format(attr));
+			if (key == null) {
+				throw new IllegalArgumentException("Key is null for composed data " + name);
+			}
+			System.out.println(name + ".value " + format(cds.get(key)));
+		} else {
+			System.out.println(name + ".value " + format(attr));
+		}
 	}
 
 	private void output(String name, Object attr) {
@@ -87,10 +113,12 @@ public class JMXQuery {
 				String key = it.next().toString();
 				System.out.println(name+"."+key+".value "+format(cds.get(key)));
 			}
-		}else
-			System.out.println(name+".value "+format(attr));
+		} else {
+			System.out.println(name + ".value " + format(attr));
+		}
 	}
 
+	@SuppressWarnings("unchecked")
 	private void listAll() throws IOException, InstanceNotFoundException, IntrospectionException, ReflectionException {
 		Set<ObjectName> mbeans = connection.queryNames(null, null);
 		for(ObjectName name : mbeans){
@@ -100,30 +128,29 @@ public class JMXQuery {
 			for(int i=0;i<attrs.length;i++){
 				attrNames[i] = attrs[i].getName();
 			}
-			try {
+			try	{
 				AttributeList attributes = connection.getAttributes(name, attrNames);
-				for(Attribute attribute: attributes.asList()){	
+				for(Attribute attribute: attributes.asList()){
 					output(name.getCanonicalName()+"%"+attribute.getName(),attribute.getValue());
-				}				
+				} 
 			} catch (Exception e) {
 				System.err.println("error getting "+name+":"+e.getMessage());
 			}
-
 		}
 	}
-	
+
 	private String format(Object value) {
-		if(value==null)
+		if (value == null) {
 			return null;
-		else if(value instanceof String)
+		} else if (value instanceof String)	{
 			return (String) value;
-		else if(value instanceof Number){
+		} else if (value instanceof Number)	{
 			NumberFormat f = NumberFormat.getInstance();
 			f.setMaximumFractionDigits(2);
 			f.setGroupingUsed(false);
 			return f.format(value);
-		}else if(value instanceof Object[]){
-			return Arrays.toString((Object[])value);
+		} else if (value instanceof Object[]) {
+			return Integer.toString(Arrays.asList((Object[])value).size());
 		}
 		return value.toString();
 	}
@@ -131,50 +158,68 @@ public class JMXQuery {
 	private void disconnect() throws IOException {
         connector.close();
 	}
-	
-	
+
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		if(args.length<1)
-			System.err.println("Usage of program is:\n"+
-					"java -cp jmxquery.jar org.munin.JMXQuery <URL> [[<config file>] config]\n"+
-					", where <URL> is a JMX URL, for example: service:jmx:rmi:///jndi/rmi://HOST:PORT/jmxrmi\n"+
-					"When invoked with the config file (look examples folder) - operates as Munin plugin with the proviuded configuration\n"+
-					"Without options just fetches all JMX attributes using provided URL");
-		
-		String url = args[0];
-		String config_file = args.length > 1 ? args[1] : null;
-		boolean toconfig = args.length>2 && args[2].equalsIgnoreCase("config");
-		
-		if(toconfig){
+		int arglen = args.length;
+		if (arglen < 1) {
+			System.err.println(USAGE);
+			System.exit(1);
+		}
+
+		String url = null;
+		String user = null;
+		String pass = null;
+		String config_file = null;
+		boolean toconfig = false;
+		for (int i = 0; i < arglen; i++) {
+			if (args[i].startsWith("--url=")) {
+				url = args[i].substring(6);
+			} else if (args[i].startsWith("--user=")) {
+				user = args[i].substring(7);
+			} else if (args[i].startsWith("--pass=")) {
+				pass = args[i].substring(7);
+			} else if (args[i].startsWith("--conf=")) {
+				config_file = args[i].substring(7);
+			} else if (args[i].equals("config")) {
+				toconfig = true;
+			}
+		}
+
+		if (url == null || (user != null && pass == null) || (user == null && pass != null) || (config_file == null && toconfig)) {
+			System.err.println(USAGE);
+			System.exit(1);
+		}
+
+		if (toconfig) {
 			try {
 				Configuration.parse(config_file).report(System.out);
 			} catch (Exception e) {
 				System.err.println(e.getMessage()+" reading "+ config_file);
 				System.exit(1);
-			} 
-		}else{
-			JMXQuery query = new JMXQuery(url);
-			try{
+			}
+		} else {
+			JMXQuery query = new JMXQuery(url, user, pass);
+			try {
 				query.connect();
-				if(config_file!=null)
+				if (config_file != null) {
 					query.setConfig(Configuration.parse(config_file));
+				}
 				query.list();
-			}catch(Exception ex){
-				System.err.println(ex.getMessage()+" querying "+ url);
+			} catch (Exception ex) {
+				System.err.println(ex.getMessage() + " querying " + url);
 				ex.printStackTrace();
 				System.exit(1);
-			}finally{
+			} finally {
 				try {
 					query.disconnect();
 				} catch (IOException e) {
 					System.err.println(e.getMessage()+" closing "+ url);
 				}
-			}			
+			}
 		}
-		
 	}
 
 	private void setConfig(Configuration configuration) {

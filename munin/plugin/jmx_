@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # Wildcard-plugin to monitor Java JMX (http://java.sun.com/jmx)attributes.
-# To monitor a # specific set of JMX attributes, 
+# To monitor a # specific set of JMX attributes,
 # link <config_name> to this file. E.g.
 #
 #    ln -s /usr/share/plugins/jmx_ /etc/munin/plugins/jmx_java_threads
@@ -17,8 +17,8 @@
 #
 # For Tomcat to be monitored, add the following line in catalina.bat script:
 # set JAVA_OPTS=%JAVA_OPTS% -Dcom.sun.management.jmxremote.port=<PORT> -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false
-# 
-# By default, the plugin monitors localhost on <PORT> = 1616 using URL 
+#
+# By default, the plugin monitors localhost on <PORT> = 1616 using URL
 # service:jmx:rmi:///jndi/rmi://localhost:1616/jmxrmi
 # It can be changed by specifying parameters in  /etc/munin/plugin-conf.d/munin-node
 #
@@ -27,7 +27,7 @@
 #
 # Read more on JMX configuring at http://java.sun.com/j2se/1.5.0/docs/guide/management/agent.html
 # $Log$
-# 
+#
 LINK=`readlink $0`
 CONFIGNAME=`basename $0 | sed 's/^jmx_//g'`.conf
 RDIR=`dirname $LINK`
@@ -38,10 +38,15 @@ else
 SERVICE="$jmxurl"
 fi
 
+if [ "$jmxuser" != "" ]; then
+CREDS="--user=$jmxuser --pass=$jmxpass"
+fi
+
 # checks
 test -z $CONFIGNAME || test -z "$RDIR" && exit 1
 
-JMXQUERY="java -cp $RDIR/jmxquery.jar org.munin.JMXQuery $SERVICE $RDIR/$CONFIGNAME"
+JMXQUERY="java -cp $RDIR/jmxquery.jar org.munin.JMXQuery --url=$SERVICE $CREDS --conf=$RDIR/$CONFIGNAME"
+
 
 case $1 in
         (config)        $JMXQUERY config;;
