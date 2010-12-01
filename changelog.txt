@@ -11,3 +11,8 @@
 29 Jun, 2009, ver.1.0 - Added support for username/password authentication via new -u and -p options.
 			Added support for boolean variables.  (Booleans will now get converted to an integer 1 or 0, so that they can be checked by Nagios.)  
 			David Rosenstrauch <darose@darose.net>
+
+1 Dec, 2010, ver.1.1  - Merged JMX authentication from http://exchange.munin-monitoring.org/plugins/jmx
+			Modified Object[] handling to return the number of objects
+			Modified jmx_ bash script to support authentication
+			Simon-Pierre LeBel <splebel@iweb.ca>
