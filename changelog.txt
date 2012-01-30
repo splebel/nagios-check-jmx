@@ -16,3 +16,6 @@
 			Modified Object[] handling to return the number of objects
 			Modified jmx_ bash script to support authentication
 			Simon-Pierre LeBel <splebel@iweb.ca>
+
+30 Jan, 2012, ver.1.2 - Added ActiveMQ munin plugin examples
+			Simon-Pierre LeBel <splebel@iweb.ca>
